@@ -10,7 +10,7 @@ def one_hot_encoding(X: pd.DataFrame) -> pd.DataFrame:
     Function to perform one hot encoding on the input data
     """
 
-    return pd.get_dummies(X,dtype=int)
+    return pd.get_dummies(X, dtype=int, drop_first = True)
 
 def check_ifreal(y: pd.Series) -> bool:
     """
