@@ -89,36 +89,69 @@ def information_gain(Y: pd.Series, attr: pd.Series, criterion: str) -> float:
 
     """
 
-    if check_ifreal(Y)==False:
-      if criterion=="entropy":
+    if criterion=="entropy":
         base_info=entropy(Y)
-      elif criterion =="gini":
+    elif criterion =="gini":
         base_info=gini_index(Y)
+    elif criterion =="MSE":
+        base_info=mse_feat(Y)
 
-    else:
-      if criterion =="MSE":
-        base_info=MSE(Y)
-
-    print("You have not chosen a valid criterion :<")
+    # print("You have not chosen a valid criterion :<")
 
     #weighted impurities
 
     split_info=0
     tot_len= len(Y)
-    for i in attr:
-      attr_sub=Y[attr==i]
-      w_attr=len(attr_sub)/tot_len
+    if check_ifreal(attr)==False:
 
-      #adding for each attribute
-      if criterion =="entropy":
-        split_info+=w_attr*entropy(attr_sub)
-      elif criterion =="gini":
-        split_info+=w_attr*gini_index(attr_sub)
-      elif criterion =="MSE":
-        split_info+=w_attr*mse_feat(attr_sub)
+      for i in attr.unique():
+        attr_sub=Y[attr==i]
+        w_attr=len(attr_sub)/tot_len
+
+        #adding for each attribute
+        if criterion =="entropy":
+          split_info+=w_attr*entropy(attr_sub)
+        elif criterion =="gini":
+          split_info+=w_attr*gini_index(attr_sub)
+        elif criterion =="MSE":
+          split_info+=w_attr*mse_feat(attr_sub)
 
 
-    return base_info-split_info
+      return base_info-split_info
+    
+    else:
+      best_thresh_gain=-1
+      #real features need to be sorted to see their natural trends
+      sorted_features=attr.sort_values().values()
+      threshold=[]
+      for i in range(len(sorted_feature)-1):
+        threshold.append((sorted_feature[i+1]+sorted_feature[i])/2)
+      
+      for t in threshold:
+        #check for each threshold the info gain using criteria
+        left_side=attr<=t
+        right_side=attr>t
+
+        l_sum=left_side.sum()
+        r_sum=right_side.sum()
+
+        
+        w_l=l_sum/tot_len
+        w_r=r_sum/tot_len
+
+        if criterion =="entropy":
+          split_info=w_l*entropy(Y[left_side])+w_r*entropy(Y[right_side])
+        elif criterion =="gini":
+          split_info=w_l*gini_index(Y[left_side])+w_r*gini_index(Y[right_side])
+        elif criterion=="MSE":
+          split_info=w_l*mse_feat(Y[left_side])+w_r*mse_feat(Y[right_side])
+        
+        curr_gain=base_info-split_info
+        if curr_gain>best_thresh_gain:
+          best_thresh_gain=curr_gain
+          best_thresh=t
+      
+      return best_thresh_gain,best_thresh
 
 
 def opt_split_attribute(X: pd.DataFrame, y: pd.Series, criterion, features: pd.Series):
@@ -136,15 +169,28 @@ def opt_split_attribute(X: pd.DataFrame, y: pd.Series, criterion, features: pd.S
 
     best_gain=(-1)
     best_attr=None
+    best_thresh=None
     for feature in features:
       #each featuere's info gain is checked
-      feat_info_gain=information_gain(y,X[feature],criterion)
-      if feat_info_gain>best_gain:
-        best_gain=feat_info_gain
-        best_attr=feature
+      if check_ifreal(X[feature])==False:
+        feat_info_gain=information_gain(y,X[feature],criterion)
+        if feat_info_gain>best_gain:
+          best_gain=feat_info_gain
+          best_attr=feature
+      else:
+        feat_info_gain,best_thresh=information_gain(y,X[feature],criterion)
+        if feat_info_gain>best_gain:
+          best_gain=feat_info_gain
+          best_attr=feature
+          best_thresh=best_thresh
 
-    #the best split given
-    return best_attr
+    if check_ifreal(X[best_attr])==False:
+      return best_attr
+    else:
+      return best_attr,best_thresh
+
+    #the best split given: either Real with its threshold or Discrete ones
+
 
 
 
@@ -162,8 +208,16 @@ def split_data(X: pd.DataFrame, y: pd.Series, attribute, value):
     return: splitted data(Input and output)
     """
 
-    return X[X[attribute]==value]   #the inner val is a mask!
+    #here value can either act as the disc attr in a feature or the best threshold in a feature
+    if check_ifreal(X[attribute])==False:
+       return [X[X[attribute]==value], y[X[attribute]==value]] # A DISC SPLIT =>the split steps can be done again on this df
+    else:
+        #both left and right sides
+        return [X[X[attribute]<=value],y[X[attribute]<=value] ,X[X[attribute]>value], y[X[attribute]>value]]   #A REAL SPLIT
 
     # Split the data based on a particular value! of a particular attribute!. You may use masking as a tool to split the data.
 
-#more functions if required in the further questons
+
+
+# def give_the_best_split_data(X: pd.DataFrame, y: pd.Series, attribute, value):
+#     opt_split_attribute(X,y,criterion)
