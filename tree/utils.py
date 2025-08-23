@@ -6,12 +6,13 @@ There is no restriction on following the below template, these fucntions are her
 import pandas as pd
 import math
 
+
 def one_hot_encoding(X: pd.DataFrame) -> pd.DataFrame:
     """
     Function to perform one hot encoding on the input data
     """
 
-    pass
+    return pd.get_dummies(X, dtype=int, drop_first = True)
 
 def check_ifreal(y: pd.Series) -> bool:
     """
