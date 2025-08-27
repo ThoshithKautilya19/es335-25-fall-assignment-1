@@ -108,7 +108,7 @@ class DecisionTree:
             node.rightnode = self.grow_tree(X[X[best_feat] > final_split],y[X[best_feat] > final_split], depth+1)
 
             return node
-
+            
     def fit(self, X: pd.DataFrame, y: pd.Series) -> None:
         """
         Function to train and construct the decision tree
@@ -116,18 +116,41 @@ class DecisionTree:
 
         # If you wish your code can have cases for different types of input and output data (discrete, real)
         # Use the functions from utils.py to find the optimal attribute to split upon and then construct the tree accordingly.
-        # You may(according to your implemetation) need to call functions recursively to construct the tree. 
+        # You may(according to your implemetation) need to call functions recursively to construct the tree.
 
-        pass
+        self.input = {}
+        for i in X.columns:
+            self.input[i] = check_ifreal(X[i])
+        self.output = check_ifreal(y)
+
+        self.rootnode = self.grow_tree(X,y,depth = 0)
 
     def predict(self, X: pd.DataFrame) -> pd.Series:
         """
         Funtion to run the decision tree on test inputs
         """
+        y_hat = [] # hat represents prediction
+        for _,row in X.iterrows():
+            node = self.rootnode
 
-        # Traverse the tree you constructed to return the predicted values for the given test inputs.
+            while node.pred is None: # traversing through the entire nodes until we hit the leaf
+                if node.split is not None:  # regression
+                    if row[node.attr] <= node.split:
+                        node = node.leftnode
+                    else:
+                        node = node.rightnode
+                else:   # classification
+                    val = row[node.attr]
+                    node = node.children.get(val,None)
+                    if node is None:
+                        break
 
-        pass
+            if node is None:
+                y_hat.append(None)
+            else:
+                y_hat.append(node.pred)
+        return pd.Series(y_hat,index=X.index)
+
 
     def plot(self) -> None:
         """
