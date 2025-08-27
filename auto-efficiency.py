@@ -48,7 +48,7 @@ y_data=data["mpg"]
 
 #fitting the tree to the data
 for criteria in ["mse"]:
-    tree = DecisionTree(criterion=criteria)  #only msw
+    tree = DecisionTree(criterion=criteria, max_depth=5)  #only msw
     tree.fit(X_data, y_data)
     y_hat = tree.predict(X_data)
     tree.plot()
