@@ -18,6 +18,17 @@ np.random.seed(42)
 
 
 @dataclass
+
+class Node:
+    def __init__(self):
+        self.attr = None
+        self.pred = None
+        self.children = {}
+        self.rootnode = None
+        self.leftnode = None
+        self.rightnode = None
+        self.split = None
+
 class DecisionTree:
     criterion: Literal["information_gain", "gini_index"]  # criterion won't be used for regression
     max_depth: int  # The maximum depth the tree can grow to
@@ -25,6 +36,78 @@ class DecisionTree:
     def __init__(self, criterion, max_depth=5):
         self.criterion = criterion
         self.max_depth = max_depth
+        self.input = None # for knowing the nature of input(real or discrete)
+        self.output = None # for knowing the nature of input(real or discrete)
+
+    def grow_tree(self, X: pd.DataFrame, y: pd.Series, depth: int):
+        node = Node()
+        if len(y.unique()) == 1 or depth>= self.max_depth: # condition where max depth reached or else all values of y are same
+            if self.output == False:
+                node.pred = y.mode()[0]  # when output is discrete
+            else:
+                node.pred = y.mean()  # when output is real
+            return node
+
+        res = opt_split_attribute(X, y, self.criterion, X.columns)
+
+        if isinstance(res, tuple):   # real feature
+              best_feat, best_thresh = res
+        else:                        # discrete feature
+             best_feat, best_thresh = res, None
+
+        node.attr = best_feat
+        node.split = best_thresh
+
+
+        if self.input[best_feat] == False: # discrete input
+            for i in X[best_feat].unique():
+                X_subset, y_subset = split_data(X,y,best_feat,i) # Taking the subset of the dataframe where attribute = That particular feature
+
+                if len(X_subset)  == 0:
+                    child = Node()
+                    if self.output == False:
+                        child.pred = y.mode()[0] # if values of attributes are empty then return the most common value of target attribute(in case of discrete output)
+                    else:
+                        child.pred = y.mean() # if values of attributes are empty then return the mean value of target attribute(in case of real output)
+                    node.children[i] = child
+
+                else:
+                    node.children[i] = self.grow_tree(X_subset,y_subset,depth+1) # new children becomes the sub root node. so called the funtion recursively
+            return node
+
+        else:  # real input
+            avg_split = 0
+            gain = 9999999999999
+            final_split = 0
+            X_sort = X.sort_values(by=best_feat)
+            y_sort = y.loc[X_sort.index]
+            x_vals = X_sort[best_feat].values
+            y_vals = y_sort.values
+            for i in range(len(X_sort)-1):
+                avg_split = (x_vals[i] + x_vals[i+1])/2  # splits should be done between every consecutive values
+                y_left = y_vals[x_vals<=avg_split]
+                y_right = y_vals[x_vals>avg_split]
+
+
+                if self.output:  # real output
+                    weighted_loss = (len(y_left)/len(y_vals))*mse_feat(pd.Series(y_left)) + (len(y_right)/len(y_vals))*mse_feat(pd.Series(y_right))
+                else: # discrete output
+                    if self.criterion == 'gini_index':
+                        weighted_loss = (len(y_left)/len(y_vals))*gini_index(pd.Series(y_left)) + (len(y_right)/len(y_vals))*gini_index(pd.Series(y_right))
+
+                    else:
+                        weighted_loss = (len(y_left)/len(y_vals))*entropy(pd.Series(y_left)) + (len(y_right)/len(y_vals))*entropy(pd.Series(y_right))
+
+                if weighted_loss < gain:
+                    gain = weighted_loss
+                    final_split = avg_split
+
+            node.split = final_split
+
+            node.leftnode = self.grow_tree(X[X[best_feat] <= final_split],y[X[best_feat] <= final_split], depth+1)
+            node.rightnode = self.grow_tree(X[X[best_feat] > final_split],y[X[best_feat] > final_split], depth+1)
+
+            return node
 
     def fit(self, X: pd.DataFrame, y: pd.Series) -> None:
         """
