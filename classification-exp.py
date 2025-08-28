@@ -145,3 +145,20 @@ def cross_val_nested(X, y, max_depth_candidates=range(1, 11), k=5, criterion="in
         "best_depths": best_depths
     }
 
+#testing it out on the dataset generated at the start
+cross_val_nested(X,y)
+
+#results
+# {'mean_accuracy': np.float64(0.9),
+#  'mean_precision': np.float64(0.9016161616161616),
+#  'mean_recall': np.float64(0.904318181818182),
+#  'best_depths': [1, 2, 1, 1, 1]}
+
+#testing out a depth of 1
+et_d_tree=DecisionTree(max_depth=1,criterion="information_gain")
+et_d_tree.fit(X_train,y_train)
+yh_test=et_d_tree.predict(X_test)
+accuracy(y_test,yh_test)
+
+#results
+# np.float64(0.9333333333333333)
