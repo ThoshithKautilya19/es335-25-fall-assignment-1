@@ -10,9 +10,17 @@ num_average_time = 100  # Number of times to run each experiment to calculate th
 
 
 # Function to create fake data (take inspiration from usage.py)
-def make_fake_data(M,N):
-    X = pd.DataFrame(np.random.randn(N, P))
-    y = pd.Series(np.random.randn(N))
+#need to add for the four cases, take those as ip
+def make_fake_data(N,M,input_type="discrete",output_type="discrete"):
+    if input_type=="discrete":
+        X=pd.DataFrame(np.random.randint(0,3,size=(N,M)),columns=[f"X{i}" for i in range(M)])
+    else:  #real ip
+        X=pd.DataFrame(np.random.randn(N,M),columns=[f"X{i}" for i in range(M)])
+    if output_type=="discrete":
+        y=pd.Series(np.random.randint(0,2,size=N))
+    else:  #real op
+        y=pd.Series(np.random.randn(N))
+  
     return X,y
 
 
