@@ -96,3 +96,35 @@ plt.show()
 
 
 # Compare the performance of your model with the decision tree module from scikit learn
+
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+import numpy as np
+
+tree=DecisionTreeRegressor(max_depth=5,random_state=42)
+
+#fitting
+tree.fit(X_data, y_data)
+
+#preds
+y_hat = tree.predict(X_data)
+
+#metrics
+rmse_val = np.sqrt(mean_squared_error(y_data, y_hat))
+mae_val = mean_absolute_error(y_data, y_hat)
+
+print("RMSE:", rmse_val)
+print("MAE:", mae_val)
+
+#visualize just to get an idea of the tree
+from sklearn.tree import plot_tree
+import matplotlib.pyplot as plt
+
+plt.figure(figsize=(20,10))
+plot_tree(tree, feature_names=X_data.columns, filled=True, rounded=True)
+plt.show()
+
+
+#results
+# RMSE: 2.178138849149237
+# MAE: 1.5952216438662674
