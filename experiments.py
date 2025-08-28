@@ -44,7 +44,64 @@ def measure_time(tree_clss,X,y):
 
 
 # Function to plot the results
-def plot_
+def measure_and_plot(Ms,Ns, max_depth):
+#give a list of Ms, Ns and Max_depth as its inputs
+    
+tree_cases=[("Discrete In,Discrete Out","discrete","discrete"),("Real In,Discrete Out","real","discrete"),("Discrete In,Real Out","discrete", "real"),("Real In,Real Out", "real", "real")]
+
+results_all={}
+
+#all cases at once
+for case_name,in_type,out_type in tree_cases:
+    print(f"Running: {case_name}") #need to see what is running without just waitiming aimlessly
+    results_all[case_name]={"Nchange":[],"Mchange":[]} #a list of lists-> containing varying Ms and Ns for a particular tree
+
+    fixed_m=5
+    for N in Ns: #foreach n
+        X,y=make_fake_data(N,fixed_m,in_type,out_type)
+        tree=DecisionTree(criterion="information_gain", max_depth=max_depth)
+        fit_time,predict_time=measure_fitting_time(tree, X, y)
+        results_all[case_name]["Nchange"].append((N,fixed_m,fit_time,predict_time))
+
+    fixed_n=500
+    for M in Ms: #foreach m
+        X,y=make_fake_data(fixed_n,M,in_type, out_type)
+        tree=DecisionTree(criterion="information_gain", max_depth=max_depth)
+        fit_time,predict_time=measure_fitting_time(tree,X,y)
+        results_all[case_name]["Mchange"].append((fixed_n,M,fit_time,predict_time))
+
+
+#plotting all the 8 plots=> (4 cases * 2 varies)
+for case_name in results_all.keys():
+    print(f"Plotting:{case_name}") #to check
+
+    Ns=[r[0] for r in results_all[case_name]["Nchange"]]
+    fit_times_N=[r[2] for r in results_all[case_name]["Nchange"]]
+    predict_times_N=[r[3] for r in results_all[case_name]["Nchange"]]
+
+    plt.figure(figsize=(8,5))
+    plt.plot(Ns,fit_times_N,marker="o",label="Fit time")
+    plt.plot(Ns,predict_times_N,marker="o",label="Predict time")
+    plt.xlabel("Number of samples (N)")
+    plt.ylabel("Time (s)")
+    plt.title(f"{case_name} - Scaling with N (M fixed)")
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
+    Ms=[r[1] for r in results_all[case_name]["Mchange"]]
+    fit_times_M=[r[2] for r in results_all[case_name]["Mchange"]]
+    predict_times_M=[r[3] for r in results_all[case_name]["Mchange"]]
+
+    plt.figure(figsize=(8,5))
+    plt.plot(Ms,fit_times_M, marker="o",label="Fit time")
+    plt.plot(Ms,predict_times_M,marker="o",label="Predict time")
+    plt.xlabel("Number of features (M)")
+    plt.ylabel("Time (s)")
+    plt.title(f"{case_name} - Scaling with M (N fixed)")
+    plt.legend()
+    plt.grid(True)
+    plt.show()
 
 # Other functions
 # ...
