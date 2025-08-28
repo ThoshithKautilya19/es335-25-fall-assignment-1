@@ -3,6 +3,9 @@ Visualization, timing and plots:
 We know that the time complexity of fitting a decision tree onto a dataset has the time complexity: O(M*N*log(N))
 Also, the time complexity for prediction would be O(log(depth)) 
 
+So,  with const M, the expected trend would be Nlog(N)
+and with const N, the expected tredn would be linear
+
 For discrete input- discrete output:
 
 
