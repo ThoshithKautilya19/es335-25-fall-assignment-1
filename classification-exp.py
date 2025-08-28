@@ -17,6 +17,7 @@ plt.scatter(X[:, 0], X[:, 1], c=y)
 
 
 # Write the code for Q2 a) and b) below. Show your results.
+#Q2(a)
 
 #convert to dataFrame
 X=pd.DataFrame(X,columns=["feat1", "feat2"])
@@ -33,15 +34,36 @@ dec_tree.fit(X_train,y_train)
 dec_tree.plot()
 
 #predicting for both info gain methods
-for criteria in ["information_gain", "gini_index"]:
-    tree = DecisionTree(criterion=criteria)
-    tree.fit(X_train, y_train)
-    y_hat = tree.predict(X_test)
+for criteria in ["entropy", "gini_index"]:
+    tree=DecisionTree(criterion=criteria)  #
+    tree.fit(X_train,y_train)
+    y_hat=tree.predict(X_test)
     tree.plot()
-    print("Criteria :", criteria)
-    print("Accuracy: ", accuracy(y_hat, y_test))
+    print("Criteria :",criteria)
+    print("Accuracy:",accuracy(y_hat,y_test))
     for cls in y_test.unique():
-        print("Precision: ", precision(y_hat, y_test, cls))
-        print("Recall: ", recall(y_hat, y_test, cls))   #classifiction task cant use RMSE, or MAE
+        print("Class:",cls)
+        print("Precision: ",precision(y_hat, y_test, cls))
+        print("Recall: ",recall(y_hat, y_test, cls))   #classifiction task cant use RMSE, or MAE
 
 #results
+# Criteria : entropy
+# Accuracy: 0.8333333333333334
+# Class: 1
+# Precision:  0.8571428571428571
+# Recall:  0.8
+# Class: 0
+# Precision:  0.8125
+# Recall:  0.8666666666666667
+
+# Criteria : gini_index
+# Accuracy: 0.9
+# Class: 1
+# Precision:  0.875
+# Recall:  0.9333333333333333
+# Class: 0
+# Precision:  0.9285714285714286
+# Recall:  0.8666666666666667
+
+
+#2(b)
