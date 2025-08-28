@@ -67,3 +67,81 @@ for criteria in ["entropy", "gini_index"]:
 
 
 #2(b)
+
+#the split function
+import numpy as np
+
+#splitting into 'k' folds +> k-1 folds for train and one for test
+def kfold_split(X, y, k=5, seed=42):
+    np.random.seed(seed)
+    indices=np.arange(len(X))
+    np.random.shuffle(indices)
+    fold_sizes=[len(X) // k] * k
+    for i in range(len(X) % k):
+        fold_sizes[i]+=1
+
+    folds=[]
+    start=0
+    for size in fold_sizes:
+        end=start+size
+        folds.append(indices[start:end])
+        start=end
+    return folds
+
+# from metrics import accuracy, precision, recall
+
+def cross_val_nested(X, y, max_depth_candidates=range(1, 11), k=5, criterion="information_gain"):
+    folds=kfold_split(X, y, k)
+    outer_acc,outer_prec,outer_rec,best_depths = [], [], [], []
+
+    for i in range(k):
+        #for each fold, setting up test and train => [train,train,train,train,train,test]
+        test_indices=folds[i]
+        train_indices=np.concatenate([folds[j] for j in range(k) if j != i])
+
+        X_train,y_train=X.iloc[train_indices],y.iloc[train_indices]
+        X_test,y_test=X.iloc[test_indices],y.iloc[test_indices]
+
+        #Inner fold creation to not overfit to this sequence of folds in train => [train1,train2,train3,val] => shufffle these folds to get a more general training alg
+        inner_folds=kfold_split(X_train, y_train, k)
+        depth_scores={}
+
+        for d in max_depth_candidates:
+            inner_acc_scores=[]
+            for j in range(k):
+                val_idx = inner_folds[j]
+                inner_train_idx = np.concatenate([inner_folds[m] for m in range(k) if m != j])
+
+                X_inner_train, y_inner_train = X_train.iloc[inner_train_idx], y_train.iloc[inner_train_idx]
+                X_val, y_val = X_train.iloc[val_idx], y_train.iloc[val_idx]
+
+                model = DecisionTree(criterion=criterion, max_depth=d)
+                model.fit(X_inner_train, y_inner_train)
+                y_pred = model.predict(X_val)
+
+                inner_acc_scores.append(accuracy(y_val,y_pred))  #taking the metrucs to find the best one
+
+            depth_scores[d] = np.mean(inner_acc_scores) #mean to find the score for a particular depth
+
+        #take best depth => max accuraacy score
+        best_depth=max(depth_scores,key=depth_scores.get)
+        best_depths.append(best_depth)
+
+        #train with best depth on outer training data
+        model=DecisionTree(criterion=criterion,max_depth=best_depth)
+        model.fit(X_train,y_train)
+        y_pred=model.predict(X_test)
+
+        #collect metrics
+        outer_acc.append(accuracy(y_test, y_pred))
+        for i in y_test.unique():
+          outer_prec.append(precision(y_test, y_pred,i))
+          outer_rec.append(recall(y_test, y_pred,i))
+
+    return {
+        "mean_accuracy": np.mean(outer_acc),
+        "mean_precision": np.mean(outer_prec, axis=0),
+        "mean_recall": np.mean(outer_rec, axis=0),
+        "best_depths": best_depths
+    }
+
