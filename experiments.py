@@ -18,11 +18,28 @@ def make_fake_data(M,N):
 
   
 # Function to calculate average time (and std) taken by fit() and predict() for different N and P for 4 different cases of DTs
+def measure_time(tree_clss,X,y):
+  ##fit
+  start=time.time()
+  tree= tree_clss
+  tree.fit(X,y)
+  end=time.time()
+  fit_time=(end-start)
 
+  ## pred time
+  start=time.time()
+  tree.predict(X)
+  end=time.time()
+  pred_time=(end-start)
+
+  return fit_time,pred_time
 
 
 # Function to plot the results
-# ...
+def plot_
+
 # Other functions
 # ...
+
+
 # Run the functions, Learn the DTs and Show the results/plots
