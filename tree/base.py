@@ -12,7 +12,7 @@ from typing import Literal
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from tree.utils import *
+from utils import *
 
 np.random.seed(42)
 
@@ -108,7 +108,7 @@ class DecisionTree:
             node.rightnode = self.grow_tree(X[X[best_feat] > final_split],y[X[best_feat] > final_split], depth+1)
 
             return node
-            
+
     def fit(self, X: pd.DataFrame, y: pd.Series) -> None:
         """
         Function to train and construct the decision tree
@@ -121,7 +121,7 @@ class DecisionTree:
         self.input = {}
         for i in X.columns:
             self.input[i] = check_ifreal(X[i])
-        self.output = check_ifreal(y)
+        self.output = check_ifreal(y.squeeze()) #safety for y  passed as a dataframe
 
         self.rootnode = self.grow_tree(X,y,depth = 0)
 
@@ -164,4 +164,23 @@ class DecisionTree:
             N: Class C
         Where Y => Yes and N => No
         """
-        pass
+        def print_tree(node,x= ""):
+            if node.split is not None:
+                print(x + f"?({node.attr} <= {node.split})")
+                print(x + "  Y: ", end="")
+                print_tree(node.leftnode, x + "     ")
+                print(x + "  N: ", end="")
+                print_tree(node.rightnode, x + "     ")
+
+            elif node.pred is not None:
+                print(str(node.pred))
+                return
+
+            else:
+                print(x + f"?({node.attr})")
+                for val, item in node.children.items():
+                    print(x + f"  {val}: ",end="")
+                    print_tree(item, x + "     ")
+
+
+        print_tree(self.rootnode)
